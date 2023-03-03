@@ -21,7 +21,7 @@ func (s *APIServer) Run() {
 	mux := http.NewServeMux()
 
 	//mux.HandleFunc("/", makeHTTPHandleFunc(ReturnHome))
-	mux.HandleFunc("/acount", makeHTTPHandleFunc(s.handleAccount))
+	mux.HandleFunc("/account", makeHTTPHandleFunc(s.handleAccount))
 
 	log.Println("API Server running on port: ", s.listenAddr)
 	http.ListenAndServe(s.listenAddr, mux)

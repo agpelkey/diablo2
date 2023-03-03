@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"log"
 	"time"
 
 	_ "github.com/lib/pq"
@@ -13,7 +14,8 @@ const dbtimeout = time.Minute * 3
 
 // Interface to hold DB functions
 type PostgresRepo interface {
-	CreateUserAccount(acc *Account) error 
+	CreateUserAccount(acc *Account) error
+	GetUserByID(id int) (*Account, error)
 }
 
 type PostgresDB struct {
@@ -24,7 +26,6 @@ type PostgresDB struct {
 func NewPostgresDB() (*PostgresDB, error) {
 	// we will be running postgres as a docker image for this project
 	// the following logic will peratin to accessing that container
-
 
 	connstr := "user=postgres dbname=postgres password=d2 sslmode=disable"
 	db, err := sql.Open("postgres", connstr)
@@ -65,6 +66,22 @@ func (p *PostgresDB) CreateUserAccountTable() error {
 }
 
 // function to get account by ID
+func (p *PostgresDB) GetUserByID(id int) (*Account, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), dbtimeout)
+	defer cancel()
+
+	query := `SELECT * FROM users where id = $1`
+	rows, err := p.db.QueryContext(ctx, query, id)
+	if err != nil {
+		log.Println(err)
+	}
+
+	for rows.Next() {
+		ScanIntoAccount(rows)
+	}
+
+	return nil, fmt.Errorf("account %d not found", id)
+}
 
 // function to create account
 
@@ -77,7 +94,7 @@ func (p *PostgresDB) CreateUserAccount(acc *Account) error {
 
 	query := `INSERT INTO users (
 		first_name, last_name, username, email, encrypted_password, created_at)
-		VALUES ($1, $2, $3, $4, $5, $6)`
+		VALUES ($1, $2, $3, $4, $5, $6);`
 
 	_, err := p.db.QueryContext(ctx, query,
 		acc.FirstName,
@@ -93,4 +110,18 @@ func (p *PostgresDB) CreateUserAccount(acc *Account) error {
 
 	return nil
 
+}
+
+func ScanIntoAccount(rows *sql.Rows) (*Account, error) {
+	account := new(Account)
+	err := rows.Scan(
+		&account.ID,
+		&account.FirstName,
+		&account.LastName,
+		&account.Username,
+		&account.Email,
+		&account.EncryptedPassword,
+		&account.CreatedAt)
+
+	return account, err
 }

@@ -18,23 +18,19 @@ type Account struct {
 }
 
 type CreateAccountRequest struct {
-	FirstName string `json:"fist_name"`
-	LastName  string `json:"last_name"`
-	UserName  string `json:"username"`
-	Email     string `json:"email"`
-	Password  string `json:"password"`
+	UserName string `json:"username"`
+	Email    string `json:"email"`
+	Password string `json:"password"`
 }
 
 // function to generate new account
-func NewAccount(fistname, lastname, password, email, username string) (*Account, error) {
+func NewAccount(username, email, password string) (*Account, error) {
 	encpw, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
 	if err != nil {
 		fmt.Println(err)
 	}
 
 	return &Account{
-		FirstName:         fistname,
-		LastName:          lastname,
 		Username:          username,
 		Email:             email,
 		EncryptedPassword: string(encpw),

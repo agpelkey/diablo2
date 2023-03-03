@@ -19,10 +19,29 @@ func (s *APIServer) handleAccount(w http.ResponseWriter, r *http.Request) error 
 	}
 
 	if r.Method == "POST" {
-		// handle logic for creating accounts
+		return s.handleCreateAccount(w, r)
 	}
 
 	return fmt.Errorf("method not allowed %s", r.Method)
+}
+
+// function to return a user by ID
+func (s *APIServer) handleGetAccountByID(w http.ResponseWriter, r *http.Request) error {
+	if r.Method == "GET" {
+		id, err := GetID(r)
+		if err != nil {
+			return err
+		}
+
+		account, err := s.db.GetUserByID(id)
+		if err != nil {
+			return err
+		}
+
+		WriteJSON(w, http.StatusOK, account)
+	}
+
+	return fmt.Errorf("Method %v not allowed ", r.Method)
 }
 
 // function to handle account creation
@@ -36,7 +55,7 @@ func (s *APIServer) handleCreateAccount(w http.ResponseWriter, r *http.Request) 
 	}
 
 	// populate account variable with fields from req
-	account, err := NewAccount(req.FirstName, req.LastName, req.UserName, req.Email, req.Password)
+	account, err := NewAccount(req.UserName, req.Email, req.Password)
 	if err != nil {
 		return err
 	}
